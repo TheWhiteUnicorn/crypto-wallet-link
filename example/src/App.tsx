@@ -3,6 +3,8 @@ import './App.css';
 import {useWallet} from "./lib";
 import {Network} from "@ethersproject/networks";
 import {getUndefinedVarErrMessage} from "./utils/checkUndefined";
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
 
 enum VkWalletAPIActions {
     ADD_WALLET = 'addWallet'
@@ -21,6 +23,8 @@ interface ConnectVkSignedMessage {
 function App() {
     const wallet = useWallet()
     const [network, setNetwork] = useState<Network>();
+
+    const [dappKeyPair] = useState(nacl.box.keyPair());
 
     const [requestBodyForVK, setRequestBodyForVK] = useState<ConnectVkSignedMessage>();
 
@@ -53,6 +57,17 @@ function App() {
         })
     }
 
+    const phantomTestHref = useMemo(() => {
+        const params = new URLSearchParams({
+            dapp_encryption_public_key: bs58.encode(dappKeyPair.publicKey),
+            cluster: "mainnet-beta",
+            app_url: "https://phantom.app",
+            redirect_link: 'https://google.com',
+        });
+        const base = `https://phantom.app/ul/v1/connect?${params.toString()}`
+        return base
+    }, [])
+
     return (
     <div className="App">
         <h3>{wallet.status}</h3>
@@ -60,6 +75,7 @@ function App() {
         <p>Network: {JSON.stringify(network)}</p>
         <button onClick={linkToVK}>Link to vk_user_id</button>
         <p>requestBodyForVK: {JSON.stringify(requestBodyForVK)}</p>
+        <a href={phantomTestHref}>TESTING</a>
     </div>
     );
 }
